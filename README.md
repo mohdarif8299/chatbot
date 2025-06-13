@@ -110,5 +110,9 @@ cd frontend
 npm install
 npm run dev
 ```
-
 ---
+
+## Test Cases
+```bash
+python3 -m unittest discover -s tests
+```
