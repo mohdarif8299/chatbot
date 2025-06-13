@@ -1,0 +1,155 @@
+openapi: 3.0.3
+info:
+  title: RAG Content API
+  description: API for uploading content, asking questions, and retrieving Q&A.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:5001/api/content
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UploadResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            content_id:
+              type: string
+            title:
+              type: string
+            user_id:
+              type: string
+            chunks_uploaded:
+              type: integer
+            created_at:
+              type: string
+              format: date-time
+
+    QuestionRequest:
+      type: object
+      required:
+        - question
+      properties:
+        question:
+          type: string
+
+    QuestionResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            question:
+              type: string
+            answer:
+              type: string
+            user_id:
+              type: string
+
+    GetQuestionsResponse:
+      type: object
+      properties:
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              content_id:
+                type: string
+              user_id:
+                type: string
+              question:
+                type: string
+              answer:
+                type: string
+              created_at:
+                type: string
+                format: date-time
+
+paths:
+  /upload:
+    post:
+      summary: Upload content file
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Successful upload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '400':
+          description: Bad request
+
+  /{content_id}/question:
+    post:
+      summary: Ask question for specific content
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: content_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionRequest'
+      responses:
+        '200':
+          description: Successful question answered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionResponse'
+        '400':
+          description: Missing question field
+
+  /{content_id}/questions:
+    get:
+      summary: Retrieve all questions for specific content
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: content_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful retrieval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetQuestionsResponse'
+        '400':
+          description: Invalid content_id
+        '404':
+          description: Content not found or unauthorized
